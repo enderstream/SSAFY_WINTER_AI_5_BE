@@ -5,13 +5,14 @@ from openai import AsyncOpenAI
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from ragInit import loadDocs, getSplit, getVectorStore, getRetriever, getChain
+from ragInit import loadDocs, getSplit, getVectorStore, getRetriever, getChain, getVectorStoreFromExisting
 # from langchain.chat_models import ChatOpenAI
 
 ### 아래 4개는 처음에 한번만 하면 됌
-docs = loadDocs()
-splits = getSplit(docs)
-vectorstore = getVectorStore(splits)
+# docs = loadDocs()
+# splits = getSplit(docs)
+# vectorstore = getVectorStore(splits)
+vectorstore = getVectorStoreFromExisting()
 retriever = getRetriever(vectorstore)
 
 

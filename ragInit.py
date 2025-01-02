@@ -15,7 +15,13 @@ from langchain.docstore.document import Document
 from langchain_upstage import ChatUpstage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_pinecone import PineconeVectorStore
 
+import openai
+# from langchain.prompts import ChatPromptTemplate
+# from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
+# from langchain.schema import SystemMessage, HumanMessage
 
 # warnings.filterwarnings("ignore")
 def clean_parsed_text(text):
@@ -47,8 +53,7 @@ def loadDocs() :
     os.environ["UPSTAGE_API_KEY"] = os.getenv("UPSTAGE_API_KEY")
     # Pinecone API KEY
     os.environ["PINECONE_API_KEY"] = os.getenv("PINECONE_API_KEY")
-    pinecone_api_key = os.environ.get("PINECONE_API_KEY")
-
+    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
     #### Document Loading
 
 
@@ -76,13 +81,44 @@ def getSplit(docs) :
 
 
 #### VECTOR STORE
+def getVectorStoreFromExisting():
+    # Pinecone API 초기화
+    api_key = os.environ["PINECONE_API_KEY"]
+    # environment = "us-east-1"  # Pinecone 환경 (콘솔에서 확인 가능)
+    pc = Pinecone(api_key=api_key)
 
-def getVectorStore(splits) :
-    # 3. Embed & indexing
-    vectorstore = PineconeVectorStore.from_documents(
-        splits, UpstageEmbeddings(model="embedding-query"), index_name="retriever-demo"
+    # 기존 인덱스 이름
+    index_name = "sqld-exam"
+
+    # 기존 인덱스 불러오기
+    if index_name not in pc.list_indexes().names():
+        raise ValueError(f"Index '{index_name}' does not exist in Pinecone.")
+
+    # PineconeVectorStore 객체 생성
+    vectorstore = PineconeVectorStore.from_existing_index(
+        index_name=index_name,
+        embedding=UpstageEmbeddings(model="embedding-query")
     )
+
     return vectorstore
+
+# def getVectorStore(splits) :
+#     # 3. Embed & indexing
+#     index_name = "sqld-exam"
+#     pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
+
+#     # create new index
+#     if index_name not in pc.list_indexes().names():
+#         pc.create_index(
+#             name=index_name,
+#             dimension=4096,
+#             metric="cosine",
+#             spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+#         )
+#     vectorstore = PineconeVectorStore.from_documents(
+#         splits, UpstageEmbeddings(model="embedding-query"), index_name="sqld-exam"
+#     )
+#     return vectorstore
 
 
 def getRetriever(vectorstore) :
@@ -94,8 +130,15 @@ def getRetriever(vectorstore) :
 
 #### 연습문제 출력하기위해선 Prompt 수정 필요요
 def getChain() :
+    openai.api_key = os.environ["OPENAI_API_KEY"]
+    
     #### Creating a Prompt with Retrieved Result
-    llm = ChatUpstage()
+    # OpenAI Chat Model 설정 (gpt-4 또는 gpt-4o-mini 사용 가능)
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",  # 또는 "gpt-4o-mini"
+        temperature=0.7,  # 응답의 창의성 조정
+        max_tokens=1500   # 최대 응답 토큰 수
+    )
 
     prompt = ChatPromptTemplate.from_messages(
         [
