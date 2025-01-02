@@ -1,18 +1,13 @@
 import os
-import warnings
 from dotenv import load_dotenv
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_upstage import UpstageDocumentParseLoader
 import re
 
-from pinecone import Pinecone, ServerlessSpec
-from langchain_pinecone import PineconeVectorStore
+from pinecone import Pinecone
 
 # from langchain_chroma import Chroma
 from langchain_upstage import UpstageEmbeddings
-from langchain.docstore.document import Document
-
-from langchain_upstage import ChatUpstage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_pinecone import PineconeVectorStore
@@ -83,7 +78,8 @@ def getSplit(docs) :
 #### VECTOR STORE
 def getVectorStoreFromExisting():
     # Pinecone API 초기화
-    api_key = os.environ["PINECONE_API_KEY"]
+    api_key = os.getenv("PINECONE_API_KEY")
+    print(api_key)
     # environment = "us-east-1"  # Pinecone 환경 (콘솔에서 확인 가능)
     pc = Pinecone(api_key=api_key)
 
@@ -130,7 +126,7 @@ def getRetriever(vectorstore) :
 
 #### 연습문제 출력하기위해선 Prompt 수정 필요요
 def getChain() :
-    openai.api_key = os.environ["OPENAI_API_KEY"]
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     
     #### Creating a Prompt with Retrieved Result
     # OpenAI Chat Model 설정 (gpt-4 또는 gpt-4o-mini 사용 가능)

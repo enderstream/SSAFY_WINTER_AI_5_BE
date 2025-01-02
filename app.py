@@ -5,8 +5,9 @@ from openai import AsyncOpenAI
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from ragInit import loadDocs, getSplit, getVectorStore, getRetriever, getChain, getVectorStoreFromExisting
+from ragInit import getRetriever, getChain, getVectorStoreFromExisting
 # from langchain.chat_models import ChatOpenAI
+load_dotenv()  # Load .env file if present
 
 ### 아래 4개는 처음에 한번만 하면 됌
 # docs = loadDocs()
@@ -16,7 +17,6 @@ vectorstore = getVectorStoreFromExisting()
 retriever = getRetriever(vectorstore)
 
 
-load_dotenv()  # Load .env file if present
 
 openai = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -97,8 +97,11 @@ async def assistant_endpoint(req: MessageRequest):
 
     return {"reply": assistant_reply}
 
+@app.get("/")
+async def root():
+    return {"message": "Hello, World!"}
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
